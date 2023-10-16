@@ -1,46 +1,32 @@
-import AbstractIntlMessages from './AbstractIntlMessages';
-import {InitializedIntlConfig} from './IntlConfig';
-import IntlError, {IntlErrorCode} from './IntlError';
+import AbstractIntlMessages from "./AbstractIntlMessages";
+import { InitializedIntlConfig } from "./IntlConfig";
+import IntlError, { IntlErrorCode } from "./IntlError";
 import {
   RichTranslationValues,
-  RichTranslationValuesPlain
-} from './TranslationValues';
-import createBaseTranslator from './createBaseTranslator';
-import resolveNamespace from './resolveNamespace';
-import NestedKeyOf from './utils/NestedKeyOf';
+  RichTranslationValuesPlain,
+} from "./TranslationValues";
+import createBaseTranslator from "./createBaseTranslator";
 
 export type CreateTranslatorImplProps<Messages> = Omit<
   InitializedIntlConfig,
-  'messages'
+  "messages"
 > & {
-  namespace: string;
   messages: Messages;
 };
 
 export default function createTranslatorImpl<
-  Messages extends AbstractIntlMessages,
-  NestedKey extends NestedKeyOf<Messages>
->(
-  {
-    getMessageFallback,
-    messages,
-    namespace,
-    onError,
-    ...rest
-  }: CreateTranslatorImplProps<Messages>,
-  namespacePrefix: string
-) {
-  // The `namespacePrefix` is part of the type system.
-  // See the comment in the function invocation.
-  messages = messages[namespacePrefix] as Messages;
-  namespace = resolveNamespace(namespace, namespacePrefix) as NestedKey;
-
-  const translator = createBaseTranslator<Messages, NestedKey>({
+  Messages extends AbstractIntlMessages
+>({
+  getMessageFallback,
+  messages,
+  onError,
+  ...rest
+}: CreateTranslatorImplProps<Messages>) {
+  const translator = createBaseTranslator<Messages>({
     ...rest,
     onError,
     getMessageFallback,
     messages,
-    namespace
   });
 
   const originalRich = translator.rich;
@@ -61,16 +47,16 @@ export default function createTranslatorImpl<
     const result = originalRich(key, values as RichTranslationValues, formats);
 
     // When only string chunks are provided to the parser, only strings should be returned here.
-    if (typeof result !== 'string') {
+    if (typeof result !== "string") {
       const error = new IntlError(
         IntlErrorCode.FORMATTING_ERROR,
-        process.env.NODE_ENV !== 'production'
+        process.env.NODE_ENV !== "production"
           ? "`createTranslator` only accepts functions for rich text formatting that receive and return strings.\n\nE.g. t.rich('rich', {b: (chunks) => `<b>${chunks}</b>`})"
           : undefined
       );
 
       onError(error);
-      return getMessageFallback({error, key, namespace});
+      return getMessageFallback({ error, key });
     }
 
     return result;

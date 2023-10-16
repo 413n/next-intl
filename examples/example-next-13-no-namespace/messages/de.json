@@ -1,0 +1,7 @@
+{
+  "title": "Start",
+  "description": "Das ist die Startseite.",
+  "rich": "Das ist <important>formatierter</important> Test.",
+  "globalDefaults": "<highlight>{globalString}</highlight>",
+  "switchLocale": "Zu {locale, select, de {Deutsch} en {Englisch} other {Unbekannt}} wechseln"
+}

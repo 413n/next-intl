@@ -1,54 +1,31 @@
 // eslint-disable-next-line import/no-named-as-default -- False positive
-import IntlMessageFormat from 'intl-messageformat';
+import IntlMessageFormat from "intl-messageformat";
 import {
   cloneElement,
   isValidElement,
   ReactElement,
   ReactNode,
-  ReactNodeArray
-} from 'react';
-import AbstractIntlMessages from './AbstractIntlMessages';
-import Formats from './Formats';
-import {InitializedIntlConfig} from './IntlConfig';
-import IntlError, {IntlErrorCode} from './IntlError';
-import MessageFormatCache from './MessageFormatCache';
-import TranslationValues, {RichTranslationValues} from './TranslationValues';
-import convertFormatsToIntlMessageFormat from './convertFormatsToIntlMessageFormat';
-import {defaultGetMessageFallback, defaultOnError} from './defaults';
-import MessageKeys from './utils/MessageKeys';
-import NestedKeyOf from './utils/NestedKeyOf';
-import NestedValueOf from './utils/NestedValueOf';
+  ReactNodeArray,
+} from "react";
+import AbstractIntlMessages from "./AbstractIntlMessages";
+import convertFormatsToIntlMessageFormat from "./convertFormatsToIntlMessageFormat";
+import { defaultGetMessageFallback, defaultOnError } from "./defaults";
+import Formats from "./Formats";
+import { InitializedIntlConfig } from "./IntlConfig";
+import IntlError, { IntlErrorCode } from "./IntlError";
+import MessageFormatCache from "./MessageFormatCache";
+import TranslationValues, { RichTranslationValues } from "./TranslationValues";
 
-function resolvePath(
-  messages: AbstractIntlMessages | undefined,
-  key: string,
-  namespace?: string
-) {
+function resolvePath(messages: AbstractIntlMessages | undefined, key: string) {
   if (!messages) {
     throw new Error(
-      process.env.NODE_ENV !== 'production'
-        ? `No messages available at \`${namespace}\`.`
+      process.env.NODE_ENV !== "production"
+        ? `No messages available.`
         : undefined
     );
   }
 
-  let message = messages;
-
-  key.split('.').forEach((part) => {
-    const next = (message as any)[part];
-
-    if (part == null || next == null) {
-      throw new Error(
-        process.env.NODE_ENV !== 'production'
-          ? `Could not resolve \`${key}\` in ${
-              namespace ? `\`${namespace}\`` : 'messages'
-            }.`
-          : undefined
-      );
-    }
-
-    message = next;
-  });
+  const message = messages[key] || key || "Translation missing";
 
   return message;
 }
@@ -63,12 +40,12 @@ function prepareTranslationValues(values: RichTranslationValues) {
     const value = values[key];
 
     let transformed;
-    if (typeof value === 'function') {
+    if (typeof value === "function") {
       transformed = (chunks: ReactNode) => {
         const result = value(chunks);
 
         return isValidElement(result)
-          ? cloneElement(result, {key: key + index++})
+          ? cloneElement(result, { key: key + index++ })
           : result;
       };
     } else {
@@ -83,35 +60,27 @@ function prepareTranslationValues(values: RichTranslationValues) {
 
 function getMessagesOrError<Messages extends AbstractIntlMessages>({
   messages,
-  namespace,
-  onError = defaultOnError
+  onError = defaultOnError,
 }: {
   messages?: Messages;
-  namespace?: string;
   onError?(error: IntlError): void;
 }) {
   try {
     if (!messages) {
       throw new Error(
-        process.env.NODE_ENV !== 'production'
+        process.env.NODE_ENV !== "production"
           ? `No messages were configured on the provider.`
           : undefined
       );
     }
 
-    const retrievedMessages = namespace
-      ? resolvePath(messages, namespace)
-      : messages;
-
-    if (!retrievedMessages) {
+    if (!messages) {
       throw new Error(
-        process.env.NODE_ENV !== 'production'
-          ? `No messages for namespace \`${namespace}\` found.`
-          : undefined
+        process.env.NODE_ENV !== "production" ? `No messages found.` : undefined
       );
     }
 
-    return retrievedMessages;
+    return messages;
   } catch (error) {
     const intlError = new IntlError(
       IntlErrorCode.MISSING_MESSAGE,
@@ -125,14 +94,13 @@ function getMessagesOrError<Messages extends AbstractIntlMessages>({
 export type CreateBaseTranslatorProps<Messages> = InitializedIntlConfig & {
   messageFormatCache?: MessageFormatCache;
   defaultTranslationValues?: RichTranslationValues;
-  namespace?: string;
   messagesOrError: Messages | IntlError;
 };
 
 function getPlainMessage(candidate: string, values?: unknown) {
   if (values) return undefined;
 
-  const unescapedMessage = candidate.replace(/'([{}])/gi, '$1');
+  const unescapedMessage = candidate.replace(/'([{}])/gi, "$1");
 
   // Placeholders can be in the message if there are default values,
   // or if the user has forgotten to provide values. In the latter
@@ -147,34 +115,28 @@ function getPlainMessage(candidate: string, values?: unknown) {
 }
 
 export default function createBaseTranslator<
-  Messages extends AbstractIntlMessages,
-  NestedKey extends NestedKeyOf<Messages>
->(config: Omit<CreateBaseTranslatorProps<Messages>, 'messagesOrError'>) {
+  Messages extends AbstractIntlMessages
+>(config: Omit<CreateBaseTranslatorProps<Messages>, "messagesOrError">) {
   const messagesOrError = getMessagesOrError({
     messages: config.messages,
-    namespace: config.namespace,
-    onError: config.onError
+    onError: config.onError,
   }) as Messages | IntlError;
 
-  return createBaseTranslatorImpl<Messages, NestedKey>({
+  return createBaseTranslatorImpl<Messages>({
     ...config,
-    messagesOrError
+    messagesOrError,
   });
 }
 
-function createBaseTranslatorImpl<
-  Messages extends AbstractIntlMessages,
-  NestedKey extends NestedKeyOf<Messages>
->({
+function createBaseTranslatorImpl<Messages extends AbstractIntlMessages>({
   defaultTranslationValues,
   formats: globalFormats,
   getMessageFallback = defaultGetMessageFallback,
   locale,
   messageFormatCache,
   messagesOrError,
-  namespace,
   onError,
-  timeZone
+  timeZone,
 }: CreateBaseTranslatorProps<Messages>) {
   function getFallbackFromErrorAndNotify(
     key: string,
@@ -183,11 +145,10 @@ function createBaseTranslatorImpl<
   ) {
     const error = new IntlError(code, message);
     onError(error);
-    return getMessageFallback({error, key, namespace});
+    return getMessageFallback({ error, key });
   }
 
   function translateBaseFn(
-    /** Use a dot to indicate a level of nesting (e.g. `namespace.nestedLabel`). */
     key: string,
     /** Key value pairs for values to interpolate into the message. */
     values?: RichTranslationValues,
@@ -199,14 +160,13 @@ function createBaseTranslatorImpl<
       return getMessageFallback({
         error: messagesOrError,
         key,
-        namespace
       });
     }
     const messages = messagesOrError;
 
     let message;
     try {
-      message = resolvePath(messages, key, namespace);
+      message = resolvePath(messages, key);
     } catch (error) {
       return getFallbackFromErrorAndNotify(
         key,
@@ -216,32 +176,26 @@ function createBaseTranslatorImpl<
     }
 
     function joinPath(parts: Array<string | undefined>) {
-      return parts.filter((part) => part != null).join('.');
+      return parts.filter((part) => part != null).join(".");
     }
 
-    const cacheKey = joinPath([locale, namespace, key, String(message)]);
+    const cacheKey = joinPath([locale, key, String(message)]);
 
     let messageFormat: IntlMessageFormat;
     if (messageFormatCache?.has(cacheKey)) {
       messageFormat = messageFormatCache.get(cacheKey)!;
     } else {
-      if (typeof message === 'object') {
+      if (typeof message === "object") {
         let code, errorMessage;
         if (Array.isArray(message)) {
           code = IntlErrorCode.INVALID_MESSAGE;
-          if (process.env.NODE_ENV !== 'production') {
-            errorMessage = `Message at \`${joinPath([
-              namespace,
-              key
-            ])}\` resolved to an array, but only strings are supported. See https://next-intl-docs.vercel.app/docs/usage/messages#arrays-of-messages`;
+          if (process.env.NODE_ENV !== "production") {
+            errorMessage = `Message at \`${key}\` resolved to an array, but only strings are supported. See https://next-intl-docs.vercel.app/docs/usage/messages#arrays-of-messages`;
           }
         } else {
           code = IntlErrorCode.INSUFFICIENT_PATH;
-          if (process.env.NODE_ENV !== 'production') {
-            errorMessage = `Message at \`${joinPath([
-              namespace,
-              key
-            ])}\` resolved to an object, but only strings are supported. Use a \`.\` to retrieve nested messages. See https://next-intl-docs.vercel.app/docs/usage/messages#structuring-messages`;
+          if (process.env.NODE_ENV !== "production") {
+            errorMessage = `Message at \`${key}\` resolved to an object, but only strings are supported. Use a \`.\` to retrieve nested messages. See https://next-intl-docs.vercel.app/docs/usage/messages#structuring-messages`;
           }
         }
 
@@ -249,7 +203,7 @@ function createBaseTranslatorImpl<
       }
 
       // Hot path that avoids creating an `IntlMessageFormat` instance
-      const plainMessage = getPlainMessage(message as string, values);
+      const plainMessage = getPlainMessage(message, values);
       if (plainMessage) return plainMessage;
 
       try {
@@ -257,7 +211,7 @@ function createBaseTranslatorImpl<
           message,
           locale,
           convertFormatsToIntlMessageFormat(
-            {...globalFormats, ...formats},
+            { ...globalFormats, ...formats },
             timeZone
           )
         );
@@ -278,15 +232,13 @@ function createBaseTranslatorImpl<
         // for rich text elements since a recent minor update. This
         // needs to be evaluated in detail, possibly also in regards
         // to be able to format to parts.
-        prepareTranslationValues({...defaultTranslationValues, ...values})
+        prepareTranslationValues({ ...defaultTranslationValues, ...values })
       );
 
       if (formattedMessage == null) {
         throw new Error(
-          process.env.NODE_ENV !== 'production'
-            ? `Unable to format \`${key}\` in ${
-                namespace ? `namespace \`${namespace}\`` : 'messages'
-              }`
+          process.env.NODE_ENV !== "production"
+            ? `Unable to format \`${key}\``
             : undefined
         );
       }
@@ -295,7 +247,7 @@ function createBaseTranslatorImpl<
       return isValidElement(formattedMessage) ||
         // Arrays of React elements
         Array.isArray(formattedMessage) ||
-        typeof formattedMessage === 'string'
+        typeof formattedMessage === "string"
         ? formattedMessage
         : String(formattedMessage);
     } catch (error) {
@@ -307,14 +259,8 @@ function createBaseTranslatorImpl<
     }
   }
 
-  function translateFn<
-    TargetKey extends MessageKeys<
-      NestedValueOf<Messages, NestedKey>,
-      NestedKeyOf<NestedValueOf<Messages, NestedKey>>
-    >
-  >(
-    /** Use a dot to indicate a level of nesting (e.g. `namespace.nestedLabel`). */
-    key: TargetKey,
+  function translateFn(
+    key: string,
     /** Key value pairs for values to interpolate into the message. */
     values?: TranslationValues,
     /** Provide custom formats for numbers, dates and times. */
@@ -322,14 +268,12 @@ function createBaseTranslatorImpl<
   ): string {
     const result = translateBaseFn(key, values, formats);
 
-    if (typeof result !== 'string') {
+    if (typeof result !== "string") {
       return getFallbackFromErrorAndNotify(
         key,
         IntlErrorCode.INVALID_MESSAGE,
-        process.env.NODE_ENV !== 'production'
-          ? `The message \`${key}\` in ${
-              namespace ? `namespace \`${namespace}\`` : 'messages'
-            } didn't resolve to a string. If you want to format rich text, use \`t.rich\` instead.`
+        process.env.NODE_ENV !== "production"
+          ? `The message \`${key}\` didn't resolve to a string. If you want to format rich text, use \`t.rich\` instead.`
           : undefined
       );
     }
@@ -339,22 +283,18 @@ function createBaseTranslatorImpl<
 
   translateFn.rich = translateBaseFn;
 
-  translateFn.raw = (
-    /** Use a dot to indicate a level of nesting (e.g. `namespace.nestedLabel`). */
-    key: string
-  ): any => {
+  translateFn.raw = (key: string): any => {
     if (messagesOrError instanceof IntlError) {
       // We have already warned about this during render
       return getMessageFallback({
         error: messagesOrError,
         key,
-        namespace
       });
     }
     const messages = messagesOrError;
 
     try {
-      return resolvePath(messages, key, namespace);
+      return resolvePath(messages, key);
     } catch (error) {
       return getFallbackFromErrorAndNotify(
         key,

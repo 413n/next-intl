@@ -1,7 +1,7 @@
-import Formats from './Formats';
-import IntlError from './IntlError';
-import TimeZone from './TimeZone';
-import {AbstractIntlMessages, RichTranslationValues} from '.';
+import Formats from "./Formats";
+import IntlError from "./IntlError";
+import TimeZone from "./TimeZone";
+import { AbstractIntlMessages, RichTranslationValues } from ".";
 
 /**
  * Should be used for entry points that configure the library.
@@ -21,13 +21,9 @@ type IntlConfig<Messages = AbstractIntlMessages> = {
    * `error.code` into account. */
   onError?(error: IntlError): void;
   /** Will be called when a message couldn't be resolved or formatting it led to
-   * an error. This defaults to `${namespace}.${key}` You can use this to
+   * an error. This defaults to `${key}` You can use this to
    * customize what will be rendered in this case. */
-  getMessageFallback?(info: {
-    error: IntlError;
-    key: string;
-    namespace?: string;
-  }): string;
+  getMessageFallback?(info: { error: IntlError; key: string }): string;
   /**
    * Providing this value will have two effects:
    * 1. It will be used as the default for the `now` argument of
@@ -52,8 +48,8 @@ type IntlConfig<Messages = AbstractIntlMessages> = {
  */
 export type InitializedIntlConfig<Messages = AbstractIntlMessages> =
   IntlConfig<Messages> & {
-    onError: NonNullable<IntlConfig<Messages>['onError']>;
-    getMessageFallback: NonNullable<IntlConfig<Messages>['getMessageFallback']>;
+    onError: NonNullable<IntlConfig<Messages>["onError"]>;
+    getMessageFallback: NonNullable<IntlConfig<Messages>["getMessageFallback"]>;
   };
 
 export default IntlConfig;

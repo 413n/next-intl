@@ -21,11 +21,11 @@ This library is based on the premise that messages can be grouped by namespaces 
 ```jsx
 // UserDetails.tsx
 import {useTranslations, useFormatter} from 'next-intl';
- 
+
 function UserDetails({user}) {
   const t = useTranslations('UserDetails');
   const format = useFormatter();
- 
+
   return (
     <section>
       <h2>{t('title')}</h2>
@@ -59,28 +59,28 @@ function UserDetails({user}) {
 2. Add the provider
 
 ```jsx
-import {IntlProvider} from 'use-intl';
+import { IntlProvider } from "use-intl";
 
 // You can get the messages from anywhere you like. You can also
-// fetch them from within a component and then render the provider 
+// fetch them from within a component and then render the provider
 // along with your app once you have the messages.
 const messages = {
-  "App": {
-    "hello": 'Hello {username}!'
-  }
+  App: {
+    hello: "Hello {username}!",
+  },
 };
 
 function Root() {
   return (
     <IntlProvider messages={messages} locale="en">
-      <App user={{name: 'Jane'}} />
+      <App user={{ name: "Jane" }} />
     </IntlProvider>
   );
 }
 
-function App({user}) {
-  const t = useTranslations('App');
-  return <h1>{t('hello', {username: user.name})}</h1>;
+function App({ user }) {
+  const t = useTranslations("App");
+  return <h1>{t("hello", { username: user.name })}</h1>;
 }
 ```
 

@@ -1,9 +1,10 @@
-import {ReactNode} from 'react';
+import { ReactNode } from "react";
 
 // From IntlMessageFormat#format
 export type TranslationValue =
   | string
   | number
+  | bigint
   | boolean
   | Date
   | null

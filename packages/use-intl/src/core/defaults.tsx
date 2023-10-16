@@ -1,4 +1,4 @@
-import IntlError from './IntlError';
+import IntlError from "./IntlError";
 
 /**
  * Contains defaults that are used for all entry points into the core.
@@ -8,9 +8,8 @@ import IntlError from './IntlError';
 export function defaultGetMessageFallback(props: {
   error: IntlError;
   key: string;
-  namespace?: string;
 }) {
-  return [props.namespace, props.key].filter((part) => part != null).join('.');
+  return props.key;
 }
 
 export function defaultOnError(error: IntlError) {
